@@ -1,10 +1,9 @@
 import { Component } from 'react';
 
 import Bar from './components/Bar/Bar';
+import ControlBar from './components/ControlBar/ControlBar';
 
 import classes from './App.module.css';
-import bubbleSort from './algorithms/bubbleSort';
-import selectionSort from './algorithms/selectionSort';
 
 const MIN_HEIGHT = 15;
 const MAX_HEIGHT = 400;
@@ -12,9 +11,10 @@ const MAX_HEIGHT = 400;
 const MIN_NUMBER_OF_BARS = 5;
 const MAX_NUMBER_OF_BARS = 30;
 
-const TOTAL_BAR_WIDTH = 800;
+const MIN_ANIMATION_MS = 20;
+const MAX_ANIMATION_MS = 200;
 
-const ANIMATION_SPEED = 100;
+const TOTAL_BAR_WIDTH = 800;
 
 class App extends Component {
   constructor(props) {
@@ -27,7 +27,8 @@ class App extends Component {
       animations: [],
       animationIndex: 0,
       animationIndexState: 0,
-      isSorting: false
+      isSorting: false,
+      animationSpeedPerSec: 1000 / MAX_ANIMATION_MS
     }
   }
 
@@ -46,7 +47,7 @@ class App extends Component {
               bars: newBars,
               animationIndexState: (this.state.animationIndexState + 1) % 3
             })
-          }, ANIMATION_SPEED);
+          }, 1000 / this.state.animationSpeedPerSec);
           break;
         case 1:
           setTimeout(() => {
@@ -57,7 +58,7 @@ class App extends Component {
               bars: newBars,
               animationIndexState: (this.state.animationIndexState + 1) % 3
             })
-          }, ANIMATION_SPEED)
+          }, 1000 / this.state.animationSpeedPerSec)
           break;
         case 2:
           setTimeout(() => {
@@ -83,7 +84,7 @@ class App extends Component {
               bars: newBars,
               animationIndexState: (this.state.animationIndexState + 1) % 3
             })
-          }, ANIMATION_SPEED);
+          }, 1000 / this.state.animationSpeedPerSec);
           break;
         default:
           return
@@ -116,25 +117,47 @@ class App extends Component {
     })
   }
 
+  animationSpeedChangeHandler = (e) => {
+    const newAnimationSpeed = +e.target.value;
+    this.setState({
+      animationSpeedPerSec: newAnimationSpeed
+    });
+  }
+
+  resetHandler = () => {
+    const newBars = this.getNewBars(this.state.numBars);
+    console.log(newBars);
+    this.setState({
+      bars: newBars
+    })
+  }
+
   sortHandler = (func) => {
     const barHeightValues = this.state.bars.map(bar => bar.height);
     const animations = func(barHeightValues);
     this.setState({
       animations: animations,
-      isSorting: true
+      isSorting: true,
+      animationIndex: 0
     })
   }
   
   render() {
     return (
       <div className={ classes.App }>
-        <h1>Hello</h1>
-        <input 
-          type="range" 
-          min={ MIN_NUMBER_OF_BARS } 
-          max={ MAX_NUMBER_OF_BARS } 
-          onChange={ this.barsChangeHandler }
-          value={ this.state.numBars }/>
+        <h1>Sorting Visualizer</h1>
+        <ControlBar 
+          sort={ this.sortHandler }
+          isSorting={ this.state.isSorting }
+          minNumberOfBars={ MIN_NUMBER_OF_BARS }
+          maxNumberOfBars={ MAX_NUMBER_OF_BARS }
+          barsChange={ this.barsChangeHandler }
+          numBars={ this.state.numBars }
+          maxAnimationSpeedMs={ MAX_ANIMATION_MS }
+          minAnimationSpeedMs={ MIN_ANIMATION_MS }
+          animationSpeedChange={ this.animationSpeedChangeHandler }
+          animationSpeedPerSec={ this.state.animationSpeedPerSec }
+          reset={ this.resetHandler } />
         <div className={ classes.BarsContainer }>
           {
             this.state.bars.map(bar => 
@@ -145,8 +168,6 @@ class App extends Component {
                 selected={ bar.selected }/>)
           }
         </div>
-        <button onClick={ () => this.sortHandler(bubbleSort) } >Bubble sort</button>
-        <button onClick={ () => this.sortHandler(selectionSort) } >Selection sort</button>
       </div>
     );
   }
